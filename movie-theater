@@ -1,0 +1,16 @@
+(define AUDIENCE 120)
+(define AVG-ATTEND 15)
+(define COST-PER-ATTENDEE-PER-SHOW 0.04)
+(define TICKET_PRICE-CHANGE 0.1)
+(define BASE-TICKET 5.0)
+
+
+
+(define (attendees ticket-price)
+  (- AUDIENCE (* (- ticket-price BASE-TICKET) (/ AVG-ATTEND TICKET_PRICE-CHANGE))))
+
+(define (revenue ticket-price)
+  (* ticket-price (attendees ticket-price)))
+
+(define (cost ticket-price)
+  (* COST-PER-ATTENDEE-PER-SHOW (attendees ticket-price)))
