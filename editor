@@ -1,0 +1,58 @@
+(require 2htdp/image)
+(require 2htdp/universe)
+(require picturing-programs)
+
+(define-struct editor [pre post])
+; An Editor is a structure:
+;   (make-editor String String)
+; interpretation (make-editor s t) describes an editor
+; whose visible text is (string-append s t) with 
+; the cursor displayed between s and t
+(define (string-rest str) (substring str (/ (string-length str) (string-length str))))
+(define (string-join s s2) (string-append s (string-append "_" s2)))
+(define cursor
+  (rectangle 1 20 "solid" "red"))
+
+
+
+
+(define (text-box s0)
+  (big-bang s0
+    (to-draw display)
+    
+    (on-key edit)))
+
+(define (display s)
+  (place-image/align
+   
+    (overlay/align "right" "center" cursor
+                   (text s 20 "black"))
+   0 0
+   "left" "top"
+   (empty-scene 200 20)))
+   
+                    
+
+(define (move-left s)
+  (cond
+    [(string=? s "") ""]
+    [else (overlay/align "left" "center" (text (editor-pre s) 20 "black"))]))
+                         
+
+(define (delete-last s)
+  (cond
+    [(string=? s "") ""]
+    [else (substring s 0 (- (string-length s) 1))]))
+
+(define (edit text key)
+  (cond
+    [(key=? "shift" key) text]
+    [(key=? "\b" key) (delete-last text)]
+    [(key=? "left" key) (move-left text)] 
+    [else (string-append text key)]))
+
+(define (shift-okay text key)
+  (cond
+    [(key=? "shift" key) text]
+    [else (string-append text key)]))
+
