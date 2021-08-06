@@ -41,7 +41,7 @@
 
 (define (edit ed ke)
   (cond
-    [(key=? "\b" ke) (delete-last (editor-pre ed))]
+    [(key=? "\b" ke) (make-editor (editor-pre ed)(delete-last(editor-post ed)))]
     [else  (string-append (editor-pre ed) ke)]))
 
 (define (delete-last ed)
