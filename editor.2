@@ -1,0 +1,105 @@
+(require 2htdp/image)
+(require 2htdp/universe)
+(require picturing-programs)
+
+(define-struct editor [pre post])
+; An Editor is a structure:
+;   (make-editor String String)
+; interpretation (make-editor s t) describes an editor
+; whose visible text is (string-append s t) with 
+; the cursor displayed between s and t
+(define (string-rest str)
+  (substring (editor-pre str)
+             (/ (string-length (editor-post str))
+                (string-length (editor-post str)))))
+(define (string-join s s2) (string-append s (string-append "_" s2)))
+(define (string-last str) (substring str (- (string-length str) 1)(string-length str)))
+(define (string-remove-last str) (substring str 0 (- (string-length str) 1)))
+(define cursor
+  (rectangle 1 20 "solid" "red"))
+
+
+
+
+
+(define (text-box ed)
+  (big-bang ed
+    (to-draw render)
+    (on-key edit)))
+
+
+
+
+
+
+(define (render ed)
+   (overlay/align "left" "center"
+                  (beside
+                (text (string-append(editor-pre ed)  (editor-post ed))  11 "black") cursor)
+                
+               (empty-scene 200 20)))
+
+(define (edit ed ke)
+  (cond
+    [(key=? "\b" ke) (delete-last (editor-pre ed))]
+    [else  (string-append (editor-pre ed) ke)]))
+
+(define (delete-last ed)
+  (cond
+    [(string=?  ed "") ""]
+    [else (substring  ed 0 (- (string-length  ed) 1))]))
+
+#|(define (delete-last ed)
+  (cond
+    [(string=? (editor-pre ed) "") ""]
+    [else (string-append
+           (substring
+            (editor-post ed) 0 (- (string-length (editor-post ed)) 1))
+           (editor-post ed))]))|#
+
+
+
+
+
+
+
+
+
+(define (cursor-pos s)
+  (string-length s))
+
+#|(define (text-box s0)
+  (big-bang s0
+    (to-draw display)
+    
+    (on-key edit)))|#
+
+
+(define (display s) 
+      (overlay/align
+                    "left" "center" 
+                   (beside(text  s 20 "black")
+                   cursor)
+   (empty-scene 200 20)) )
+
+#|(define (display s)
+  (place-image/align
+    (overlay/align
+                    "right" "center" cursor
+                   (text s 20 "black"))
+     0 0
+   "left" "top"
+   (empty-scene 200 20)))|#
+   
+                    
+
+(define (move-left s)
+  (cond
+    [(string=? s "") ""]
+    [else (string-append (string-remove-last s) (string-last s))]))
+
+(define (shift-okay text key)
+  (cond
+    [(key=? "shift" key) text]
+    [else (string-append text key)]))
+
