@@ -1,0 +1,41 @@
+; cursor at the end of string expression
+#|(define (render s)
+  (overlay/align "left" "center"
+                 (put-image
+                  cursor
+                  (image-width (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
+                     
+                  (image-height (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
+                  (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
+                 (empty-scene 200 20)))|#
+
+; right cursor expression
+;(- (image-width (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
+;(image-width (editor-pre(make-editor(text  (string-last(editor-pre s)) 11 "black")(editor-post s)))))
+
+; left cursor expression
+;                  (- (image-width (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
+;                    (image-width (editor-pre(make-editor(text  (string-last (string-append(editor-pre s)(editor-post s))) 11 "black")(editor-post s)))))
+
+
+#|(define (render s)
+  (overlay/align "left" "center"
+                                (beside
+                                 (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s)))
+                                 cursor)
+                 (empty-scene 200 20)))|#
+
+#|(define (edit s ke)
+  (cond
+    [(key=? "\b" ke) (delete-last (editor-pre s))]
+    [else  (make-editor(string-append (editor-pre s)(editor-post s)) ke)]))|#
+(define (edit s ke)
+  (cond
+    [(key=? "\b" ke) (substring   s 0 (- (string-length   (editor-pre s)) 1))]
+    [else    s ]))
+
+#|(define (text-image-width str) 
+  (image-width(text str 11 "red"))) 
+
+(define (text-image-height str)
+  (image-height (text  str 11 "red")))|#
