@@ -1,0 +1,120 @@
+(require 2htdp/image)
+(require 2htdp/universe)
+(require picturing-programs)
+
+(define (distance-to-0 ap)
+  (sqrt
+    (+ (sqr (posn-x ap))
+       (sqr (posn-y ap)))))
+
+(define (manhattan-distance p1 p2)
+   (+ (abs (- (posn-x p1) (posn-x p2))) (abs (- (posn-y p1) (posn-y p2)))))
+
+(define-struct ball [location velocity])
+
+(define SPEED 3)
+(define-struct balld [location direction])
+(make-balld 10 "up")
+
+(define-struct vel [deltax deltay])
+
+(define ball1
+  (make-ball (make-posn 30 40) (make-vel -10 5)))
+
+(define-struct ballf [x y deltax deltay])
+
+(make-ballf 30 40 -10 5)
+
+; distances in terms of pixels:
+(define HEIGHT 200)
+(define MIDDLE (quotient HEIGHT 2))
+(define WIDTH  400)
+(define CENTER (quotient WIDTH 2))
+ 
+(define-struct game [left-player right-player ball])
+ 
+(define game0
+  (make-game MIDDLE MIDDLE (make-posn CENTER CENTER)))
+
+(game-ball game0)
+(posn? (game-ball game0))
+(game-left-player game0)
+
+;(define-struct ball [location velocity])
+; A Ball-1d is a structure:  
+;   (make-ball Number Number)
+; interpretation 1 distance to top and velocity 
+; interpretation 2 distance to left and velocity 
+
+; A Ball-2d is a structure: 
+;   (make-ball Posn Vel)
+; interpretation a 2-dimensional position and velocity
+ 
+;(define-struct vel [deltax deltay])
+; A Vel is a structure: 
+;   (make-vel Number Number)
+; interpretation (make-vel dx dy) means a velocity of 
+; dx pixels [per tick] along the horizontal and
+; dy pixels [per tick] along the vertical direction
+
+(define-struct ufo [loc vel])
+; A UFO is a structure: 
+;   (make-ufo Posn Vel)
+; interpretation (make-ufo p v) is at location
+; p moving at velocity v
+
+(define v1 (make-vel 8 -3))
+(define v2 (make-vel -5 -3))
+ 
+(define p1 (make-posn 22 80))
+(define p2 (make-posn 30 77))
+ 
+(define u1 (make-ufo p1 v1))
+(define u2 (make-ufo p1 v2))
+(define u3 (make-ufo p2 v1))
+(define u4 (make-ufo p2 v2))
+
+; UFO -> UFO
+; determines where u moves in one clock tick; 
+; leaves the velocity as is
+ 
+(check-expect (ufo-move-1 u1) u3)
+(check-expect (ufo-move-1 u2)
+              (make-ufo (make-posn 17 77) v2))
+ 
+; UFO -> UFO 
+(define (ufo-move-1 u)
+  (make-ufo (posn+ (ufo-loc u) (ufo-vel u))
+            (ufo-vel u)))
+
+; Posn Vel -> Posn 
+; adds v to p 
+(define (posn+ p v)
+  (make-posn (+ (posn-x p) (vel-deltax v))
+             (+ (posn-y p) (vel-deltay v))))
+
+(check-expect (posn+ p1 v1) p2)
+(check-expect (posn+ p1 v2) (make-posn 17 77))
+
+(define-struct movie [title producer year])
+(define The-Suicide-Squad (make-movie "The-Suicide-Squad" "James-Gunn" 2021))
+
+(define (1string s)
+  (= (string-length s) 1))
+
+(define (3string s)
+  (= (string-length s) 3))
+
+(define-struct r3 [x y z])
+; An R3 is a structure:
+;   (make-r3 Number Number Number)
+ 
+(define ex1 (make-r3 1 2 13))
+(define ex2 (make-r3 -1 0 3))
+
+; R3 -> Number 
+; determines the distance of p to the origin 
+(define (r3-distance-to-0 p)
+  (sqrt(+ (sqr (r3-x p)) (sqr(r3-y p))
+          (sqr (r3-z p)) )))
+
