@@ -1,0 +1,55 @@
+(define state-sales-tax
+  0.0825)
+
+(define over-50-mu
+  .3)
+
+(define under-50-mu
+  2)
+
+(define hardware-labor-cost
+  120)
+
+(define (under-50? price)
+  (or (< price 50)
+      (< price 50)))
+
+(define (over-50? price)
+  (or (>= price 50)
+      (>= price 50)))
+
+(check-expect (markup-over-50 50.01) 65.013)
+(define (markup-over-50 price)
+  (+ price(* price over-50-mu)))
+
+(check-expect (markup-under-50 49.99) 99.98)
+(define (markup-under-50 price)
+  (* price under-50-mu))
+
+(define (check-for-mu price)
+  (cond [(under-50? price) (markup-under-50 price)]
+        [else (markup-over-50 price)]))
+
+(define (item-price price)
+  (check-for-mu price))
+
+#|(define (compute-sales-tax price)
+  (* state-sales-tax (item-price price)))
+
+(define (item-price price)
+  (check-for-mu price))
+
+; total-item-cost : number -> number
+; shows price of item after markup and sales tax
+(define (total-item-cost price)
+  (+ (compute-sales-tax price)(item-price price)))
+
+(check-within (hardware-labor 1) 129.9 .01)
+(check-within (hardware-labor 2) 259.8 .01)
+(define (hardware-labor hours)
+  (+ (* hours hardware-labor-cost) (* state-sales-tax (* hours hardware-labor-cost))))
+
+(check-within (cost-plus-taxed-hw-labor 1 51) 201.67 .01)
+(check-within (cost-plus-taxed-hw-labor 2 51) 331.57 .01)
+(define (cost-plus-taxed-hw-labor hours part-price)
+  (+ (hardware-labor hours) (total-item-cost part-price)))|#
