@@ -2,12 +2,6 @@
 (require 2htdp/universe)
 (require picturing-programs)
 
-(define-struct editor [pre post])
-; An Editor is a structure:
-;   (make-editor String String)
-; interpretation (make-editor s t) describes an editor
-; whose visible text is (string-append s t) with 
-; the cursor displayed between s and t
 (define (string-rest str)
   (substring (editor-pre str)
              (/ (string-length (editor-post str))
@@ -16,29 +10,37 @@
 (define (string-last str) (substring str (- (string-length str) 1)(string-length str)))
 (define (string-remove-last str) (substring str 0 (- (string-length str) 1)))
 
+(define-struct editor [pre post])
+; An Editor is a structure:
+;   (make-editor String String)
+; interpretation (make-editor s t) describes an editor
+; whose visible text is (string-append s t) with 
+; the cursor displayed between s and t
+
 (define cursor
   (rectangle 1 20 "solid" "red"))
 
-(define (run s) 
-  (big-bang    s 
+(define (run  s)
+  (big-bang  s
     (to-draw render)
     (on-key edit)))
 
 (define (render s)
-  (place-image/align cursor
-                     (text-image-width s) (/ (text-image-height s) 2)
-                     "right" "center"
   (overlay/align "left" "center"
-                                (text  (editor-pre s)  11 "black")
-                 (empty-scene 200 20))))
- 
-(define (text-image-width s) 
-  (image-width(text (editor-pre s) 11 "red"))) 
+                 (put-image
+                  cursor
+                  (image-width (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
+                  (image-height (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
+                  (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
+                 (empty-scene 200 20)))
 
-(define (text-image-height s)
-  (image-height (text  (editor-pre s) 11 "red")))
+(define (cursor-posn s)
+  (image-width (put-image
+                  cursor
+                  (image-width (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
+                  (image-height (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
+                  (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))))
         
-
 
 #|(define (edit s ke)
   (cond
@@ -46,16 +48,16 @@
     [else  (make-editor(string-append (editor-pre s)(editor-post s)) ke)]))|#
 (define (edit s ke)
   (cond
-    [(key=? "\b" ke) (delete-last (editor-pre s))]
-    [else    s ]))
-
-(define (delete-last s)
+    [(key=? "\b" ke) (make-editor (substring (string-append (editor-pre s) (editor-post s)) 0 (- (string-length (string-append (editor-pre s) (editor-post s))) 1)) ke)]
+    [else (make-editor (string-append (editor-pre s) (editor-post s)) ke)])) 
+  
+#|(define (delete-last s)
   (cond
     [(string=?   s "") ""]
-    [else (substring   s 0 (- (string-length   s) 1))]))
+    [else (substring   s 0 (- (string-length   s) 1))]))|#
 
-(define test (make-editor "test" (make-posn (text-image-width (text "test" 11 "red"))
-                                            (text-image-height (text "test" 11 "red")))))
+;(define test (make-editor "test" (make-posn (text-image-width (text "test" 11 "red"))
+;                                           (text-image-height (text "test" 11 "red")))))
 
 #|  (define (render s)
   (overlay/align "left" "center"
@@ -73,50 +75,4 @@
            (substring
             (editor-post ed) 0 (- (string-length (editor-post ed)) 1))
            (editor-post ed))]))|#
-
-
-
-
-
-
-
-
-
-(define (cursor-pos s)
-  (string-length s))
-
-#|(define (text-box s0)
-  (big-bang s0
-    (to-draw display)
-    
-    (on-key edit)))|#
-
-
-(define (display s) 
-  (overlay/align
-   "left" "center" 
-   (beside(text  s 20 "black")
-          cursor)
-   (empty-scene 200 20)) )
-
-#|(define (display s)
-  (place-image/align
-    (overlay/align
-                    "right" "center" cursor
-                   (text s 20 "black"))
-     0 0
-   "left" "top"
-   (empty-scene 200 20)))|#
-   
-                    
-
-(define (move-left s)
-  (cond
-    [(string=? s "") ""]
-    [else (string-append (string-remove-last s) (string-last s))]))
-
-(define (shift-okay text key)
-  (cond
-    [(key=? "shift" key) text]
-    [else (string-append text key)]))
 
