@@ -1,0 +1,82 @@
+(require 2htdp/image)
+(require 2htdp/universe)
+(require picturing-programs)
+
+(define (string-rest str)
+  (substring (editor-pre str)
+             (/ (string-length (editor-post str))
+                (string-length (editor-post str)))))
+(define (string-join s s2) (string-append s (string-append "_" s2)))
+(define (string-last str) (substring str (- (string-length str) 1)(string-length str)))
+(define (string-remove-last str) (substring str 0 (- (string-length str) 1)))
+
+(define-struct editor [pre post])
+; An Editor is a structure:
+;   (make-editor String String)
+; interpretation (make-editor s t) describes an editor
+; whose visible text is (string-append s t) with 
+; the cursor displayed between s and t
+
+(define cursor
+  (rectangle 1 20 "solid" "red"))
+
+(define (run s)
+  (big-bang  s
+    (to-draw render)
+    (on-key edit)))
+
+(define (render s)
+  (overlay/align "left" "center"
+                 (place-image
+                  cursor
+                  (image-width (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
+                  (image-height (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
+                  (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
+                 (empty-scene 200 20)))
+
+(define (cursor-posn s)
+  (image-width (place-image
+                  cursor
+                  (image-width (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
+                  (image-height (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
+                  (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))))
+        
+(define (edit ed ke)
+  (cond
+    [(key=? "\b" ke)
+     (delete-last   ed)]
+    [else (make-editor (string-append (editor-pre ed) ke) (editor-post ed))])) 
+  
+(define (delete-last s)
+  (cond
+    [(string=?  (editor-pre s) "") ""] 
+    [else  (substring (editor-pre s) 0 (- (string-length  (editor-pre s)  ) 1))]))
+
+
+
+#|(define (edit s ke)
+  (cond
+    [(key=? "\b" ke) (delete-last (editor-pre s))]
+    [else  (make-editor(string-append (editor-pre s)(editor-post s)) ke)]))|#
+
+
+;(define test (make-editor "test" (make-posn (text-image-width (text "test" 11 "red"))
+;                                           (text-image-height (text "test" 11 "red")))))
+
+#|  (define (render s)
+  (overlay/align "left" "center"
+                 
+                 (place-image/align
+                  (text (string-append(editor-pre s)  (editor-post s))  11 "black")
+                  100 10 "left" "bottom"
+                   
+                 (empty-scene 200 20)))|#
+
+#|(define (delete-last ed)
+  (cond
+    [(string=? (editor-pre ed) "") ""]
+    [else (string-append
+           (substring
+            (editor-post ed) 0 (- (string-length (editor-post ed)) 1))
+           (editor-post ed))]))|#
+
