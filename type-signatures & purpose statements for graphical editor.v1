@@ -1,0 +1,187 @@
+(require 2htdp/image)
+(require 2htdp/universe)
+(require picturing-programs)
+
+;;random misc string functions 
+(define (string-rest str)
+  (substring (editor-pre str)
+             (/ (string-length (editor-post str))
+                (string-length (editor-post str)))))
+
+(define (string-join s s2) (string-append s (string-append "_" s2)))
+
+(define (string-remove-last str) (substring str 0 (- (string-length str) 1)))
+
+(define-struct editor [pre post])
+; An Editor is a structure:
+;   (make-editor String String)
+; interpretation (make-editor s t) describes an editor
+; whose visible text is (string-append s t) with 
+; the cursor displayed between s and t
+
+; string-last : string -> String
+; string-last takes in a string and outputs the string with the last string removed
+(define (string-last s)
+  ; string-last takes in a string and outputs the string with the last string removed
+  (cond
+    [(> (string-length s) 0) (substring s (- (string-length  s) 1)(string-length s)) ]
+    [else s]))
+(define cursor
+  (rectangle 1 20 "solid" "red"))
+
+(define (run s)
+  (big-bang  s
+    (to-draw render)
+    (on-key edit)))
+
+; distance-from-cursor : number -> Number
+; distance-from-cursor takes in a number and multipies it by 6
+(check-expect (distance-from-cursor 6) 36)
+(check-expect (distance-from-cursor 7) 42)
+(check-expect (distance-from-cursor 0) 0)
+(check-expect (distance-from-cursor 1) 6)
+(check-expect (distance-from-cursor -1) -6)
+(define (distance-from-cursor n)
+  (*  n 6)) 
+
+; Image -> Image
+; Displays an Image with a cursor at a posn when given a string 
+(check-expect (render (make-editor "h" 6)) (overlay/align "left" "center"
+                 (place-image
+                  cursor
+                  (distance-from-cursor   (editor-post (make-editor "h" 6)))
+                  15
+                  (text  (editor-pre (make-editor "h" 6)) 11 "black"))
+                 (empty-scene 200 20)))
+
+(define (render s)
+  (overlay/align "left" "center"
+                 (place-image
+                  cursor
+                  (distance-from-cursor   (editor-post s))
+                  15
+                  (text  (editor-pre s) 11 "black"))
+                 (empty-scene 200 20)))
+
+(define (valid-key? s ke)
+  (cond
+    [(not (key=? "\b" ke)) true]
+    [(not (key=? "left" ke)) true]
+    [(not (key=? "right" ke)) true]
+    [(not (key=? "\r" ke)) true]
+    [(not (key=? "\t" ke)) true]
+    [else false]))
+
+;(check-expect (edit (make-editor "" 0) "d") (make-editor "d" 6))
+;(check-expect (edit (make-editor "" 0) "\b") (make-editor "" 0))
+;(check-expect (edit (make-editor "h" 0) "\b") (make-editor "" 0))
+;(check-expect (edit (make-editor "" 0) "left") (make-editor "" 0))  
+(define (edit ed ke)
+  (cond
+    [(key=? "\b" ke) (delete-last ed)]
+    [(valid-key? "left" ke) (distance-from-cursor  ed)]
+    [else  (string-append  ed ke)  ]))
+ 
+(define (delete-last s)
+  (cond
+    [(string=?  s "")  "" ] 
+    [else  (substring  s 0 (- (string-length  s) 1))  ]))
+
+; left cursor expression
+;(- (image-width (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
+;                    (image-width (editor-pre(make-editor(text  (string-last (string-append(editor-pre s)(editor-post s))) 11 "black")(editor-post s)))))
+; left cursor expression
+;(- (image-width (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
+; (- (image-width (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
+;   (image-width (editor-pre(make-editor(text  (string-last (string-append(editor-pre s)(editor-post s))) 11 "black")(editor-post s))))))  
+
+#|(define (cursor-posn s)
+   (image-width (place-image
+                cursor
+                 ;(cursor-helper s)
+                (distance-from-cursor s ke)
+                6 
+                ;[(string=? s "right") (right-cursor s)])
+
+                ;(editor-pre (make-editor
+                             (text s 11 "black"))))|#
+ 
+(define (left-cursor-posn s)
+  (editor-post (make-editor s
+                            (image-width(place-image
+                                         cursor
+                                         #|(- (image-width (editor-pre(make-editor(text  s 11 "black") (editor-post s)))) 
+                               (- (image-width (editor-pre(make-editor(text  s 11 "black")(editor-post s))))
+                                  (image-width (editor-pre (make-editor(text (string-last  s) 11 "black")(editor-post s))))))
+                            (image-height (editor-pre(make-editor(text  s 11 "black")(editor-post s))))|#
+                                         (- (image-width (editor-pre(make-editor(text (editor-pre s) 11 "black") (editor-post s)))) 
+                                            (- (image-width (editor-pre(make-editor(text (editor-pre s) 11 "black")(editor-post s))))
+                                               (image-width (editor-pre (make-editor(text (string-last (editor-pre s)) 11 "black")(editor-post s))))))
+                                         (image-height (editor-pre(make-editor(text (editor-pre s) 11 "black")(editor-post s))))
+                                         ;[(string=? s "right") (right-cursor s)])
+
+                                         (editor-pre (make-editor (text (editor-pre s) 11 "black")(editor-post s))))))))
+
+
+(define (count-strings L)
+  ; L a los
+  (cond [(empty? L) (quote())]
+        [(cons? L)
+         (+ 1 (count-strings (rest L)))]))
+
+#|(define length
+  (lambda (lat)
+    (cond
+      [(null? lat) 0]
+      [else (add1 (length (cdr lat)))])))|#
+
+;(define (distance-from-cursor s)
+;  (* (count-strings () 6))
+
+
+
+
+#|(define (string-count s ke)
+  (cond
+    [(valid-key? s ke) (+ n 1)]
+    [(not (valid-key? s)) (- n 1)]))|#
+                   
+
+
+#|(define (left-cursor-posn s)
+  (- (image-width (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
+  (- (image-width (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
+     (image-width (editor-pre(make-editor(text  (string-last (string-append(editor-pre s)(editor-post s))) 11 "black")(editor-post s)))))))|#
+#|  (cond
+    [(string=? (editor-pre s) "") 0];(image-width (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))]
+    [else (- (image-width (editor-pre (make-editor (text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
+                    (image-width (editor-pre (make-editor(text  (string-last (string-append(editor-pre s)(editor-post s))) 11 "black")(editor-post s)))))]))|#
+
+  
+ 
+#|(define (edit s ke)
+  (cond
+    [(key=? "\b" ke) (delete-last (editor-pre s))]
+    [else  (make-editor(string-append (editor-pre s)(editor-post s)) ke)]))|#
+
+
+;(define test (make-editor "test" (make-posn (text-image-width (text "test" 11 "red"))
+;                                           (text-image-height (text "test" 11 "red")))))
+
+#|  (define (render s)
+  (overlay/align "left" "center"
+                 
+                 (place-image/align
+                  (text (string-append(editor-pre s)  (editor-post s))  11 "black")
+                  100 10 "left" "bottom"
+                   
+                 (empty-scene 200 20)))|#
+
+#|(define (delete-last ed)
+  (cond
+    [(string=? (editor-pre ed) "") ""]
+    [else (string-append
+           (substring
+            (editor-post ed) 0 (- (string-length (editor-post ed)) 1))
+           (editor-post ed))]))|#
+
