@@ -12,13 +12,6 @@
 
 (define (string-remove-last str) (substring str 0 (- (string-length str) 1)))
 
-(define-struct editor [pre post])
-; An Editor is a structure:
-;   (make-editor String String)
-; interpretation (make-editor s t) describes an editor
-; whose visible text is (string-append s t) with 
-; the cursor displayed between s and t
-
 ; string-last : string -> String
 ; string-last takes in a string and outputs the string with the last string removed
 (define (string-last s)
@@ -26,6 +19,15 @@
   (cond
     [(> (string-length s) 0) (substring s (- (string-length  s) 1)(string-length s)) ]
     [else s]))
+
+(define-struct editor [pre post])
+; An Editor is a structure:
+;   (make-editor String Number)
+; interpretation (make-editor s n) describes an editor
+; whose visible text is s with the cursor displayed to the right
+; of a 1string. The cursor position is being tracked by the
+; number of characters it is from the left of s.
+
 (define cursor
   (rectangle 1 20 "solid" "red"))
 
@@ -42,18 +44,19 @@
 (check-expect (distance-from-cursor 1) 6)
 (check-expect (distance-from-cursor -1) -6)
 (define (distance-from-cursor n)
-  (*  n 6)) 
+  (* n 6)) 
 
-; Image -> Image
-; Displays an Image with a cursor at a posn when given a string 
-(check-expect (render (make-editor "h" 6)) (overlay/align "left" "center"
-                 (place-image
-                  cursor
-                  (distance-from-cursor   (editor-post (make-editor "h" 6)))
-                  15
-                  (text  (editor-pre (make-editor "h" 6)) 11 "black"))
-                 (empty-scene 200 20)))
-
+; render : string -> Image
+; render takes in a string and outputs an image
+; of that string with a cursor after the last 1string 
+(check-expect (render (make-editor "h" 6))
+              (overlay/align "left" "center"
+                             (place-image
+                              cursor
+                              (distance-from-cursor (editor-post (make-editor "h" 6)))
+                              15
+                              (text  (editor-pre (make-editor "h" 6)) 11 "black"))
+                             (empty-scene 200 20)))
 (define (render s)
   (overlay/align "left" "center"
                  (place-image
@@ -63,29 +66,72 @@
                   (text  (editor-pre s) 11 "black"))
                  (empty-scene 200 20)))
 
-(define (valid-key? s ke)
+; valid-key? : key-event -> boolean
+; valid-key? takes in a key-event and
+; determines if the key a string-length of 1 if so returns true
+; if the ke is "\b" (back-space), "left",
+; "right" or any other 1string. If the ke is equal to
+; "\r" (return) or "\t" (tab) then it returns false.
+(check-expect (valid-key? "\b") true)
+(check-expect (valid-key? "b") true)
+(check-expect (valid-key? "\t") false)
+(check-expect (valid-key? "t") true)
+(check-expect (valid-key? "\r") false)
+(check-expect (valid-key? "r") true)
+(check-expect (valid-key? "0") true)
+(check-expect (valid-key? "left") true)
+(check-expect (valid-key? "right") true)
+(define (valid-key? ke)
   (cond
-    [(not (key=? "\b" ke)) true]
-    [(not (key=? "left" ke)) true]
-    [(not (key=? "right" ke)) true]
-    [(not (key=? "\r" ke)) true]
-    [(not (key=? "\t" ke)) true]
-    [else false]))
+    [(and(= (string-length ke) 1)
+         (key=? ke "\b")) true]
+    [(and(> (string-length ke) 1)
+         (key=? ke "left" )) true]
+    [(and(> (string-length ke) 1)
+         (key=? ke "right" )) true]
+    [(and(= (string-length ke) 1)
+         (key=? ke "\t")) false]
+    [(and(= (string-length ke) 1)
+         (key=? ke "\r")) false]
+    [else true]))
 
-;(check-expect (edit (make-editor "" 0) "d") (make-editor "d" 6))
-;(check-expect (edit (make-editor "" 0) "\b") (make-editor "" 0))
-;(check-expect (edit (make-editor "h" 0) "\b") (make-editor "" 0))
-;(check-expect (edit (make-editor "" 0) "left") (make-editor "" 0))  
+; edit : editor key-event -> Editor
+; edit takes in an editor structure (make-editor pre post) and key-event, it then
+; produces a new editor structure. edit appends valid key-events with valid-key? and
+; if true edit appends that key-event to the end of editor-pre which should be a string.
+; If ke equals "left" or "right" it should move the cursor to that direction if there
+; is any strings. If there is no strings then the cursor should do nothing.
+; If the "\b" (back-space) ke is triggered then it should delete the string to
+; the immediate left of the cursor, but if there is no strings it will do nothing.
+(check-expect (edit (make-editor "h" 1) "\b") (make-editor "" 0))
+(check-expect (edit (make-editor "" 0) "h") (make-editor "h" 1))
+(check-expect (edit (make-editor "he" 2) "\b") (make-editor "h" 1))
+(check-expect (edit (make-editor "hel" 3) "\b") (make-editor "he" 2))
+(check-expect (edit (make-editor "" 0) "\b") (make-editor "" 0))
+(check-expect (edit (make-editor "hello " 6) "\b") (make-editor "hello" 5))
+(check-expect (edit (make-editor " hello " 7) "\b") (make-editor " hello" 6))
+(check-expect (edit (make-editor "" 0) "left") (make-editor "" 0))
+(check-expect (edit (make-editor "h" 1) "left") (make-editor "h" 0))
+(check-expect (edit (make-editor "h" 1) "right") (make-editor "h" 1))
+(check-expect (edit (make-editor "he" 2) "left") (make-editor "he" 1))
+(check-expect (edit (make-editor "he" 2) "right") (make-editor "he" 2))
+(check-expect (edit (make-editor "hel" 3) "left") (make-editor "hel" 2))
+(check-expect (edit (make-editor "hel" 3) "right") (make-editor "hel" 3))
+(check-expect (edit (make-editor "hel" 2) "right") (make-editor "hel" 3))
+(check-expect (edit (make-editor "hel" 1) "right") (make-editor "hel" 2))
+(check-expect (edit (make-editor "hello" 5) "\t") (make-editor "hello" 5))
+(check-expect (edit (make-editor "hello" 5) "\r") (make-editor "hello" 5))
 (define (edit ed ke)
   (cond
-    [(key=? "\b" ke) (delete-last ed)]
-    [(valid-key? "left" ke) (distance-from-cursor  ed)]
-    [else  (string-append  ed ke)  ]))
+    [(key=? "\b" ke) (delete-last (editor-pre ed))]
+    [(valid-key? "left") ... ]
+    [(valid-key? "right") ... ]
+    [else (string-append (editor-pre ed) ke)]))
  
 (define (delete-last s)
   (cond
-    [(string=?  s "")  "" ] 
-    [else  (substring  s 0 (- (string-length  s) 1))  ]))
+    [(string=? s "") ""] 
+    [else (substring  s 0 (- (string-length  s) 1))]))
 
 ; left cursor expression
 ;(- (image-width (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
