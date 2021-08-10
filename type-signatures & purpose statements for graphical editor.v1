@@ -96,7 +96,9 @@
     [else true]))
 
 ; edit : editor key-event -> Editor
-; edit takes in an editor structure (make-editor pre post) and key-event, it then
+; edit takes in an editor structure (make-editor pre post),
+; so editor-pre being a String and editor-post being a Number for the editor structure.
+; The second argument to edit should be a key-event, it then
 ; produces a new editor structure. edit appends valid key-events with valid-key? and
 ; if true edit appends that key-event to the end of editor-pre which should be a string.
 ; If ke equals "left" or "right" it should move the cursor to that direction if there
