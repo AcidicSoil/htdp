@@ -2,28 +2,6 @@
 (require 2htdp/universe)
 (require picturing-programs)
 
-;;random misc string functions 
-(define (string-rest str)
-  (substring (editor-pre str)
-             (/ (string-length (editor-post str))
-                (string-length (editor-post str)))))
-
-(define (string-join s s2) (string-append s (string-append "_" s2)))
-
-(define (string-remove-last str) (substring str 0 (- (string-length str) 1)))
-
-; string-last : string -> String
-; string-last takes in a string and outputs the string with the last string removed
-(define (string-last s)
-  ; string-last takes in a string and outputs the string with the last string removed
-  (cond
-    [(> (string-length s) 0) (substring s (- (string-length  s) 1)(string-length s)) ]
-    [else s]))
-
-;(define (string-insert str i) (string-append (substring str 0 i) "_" (substring str i (string-length str))))
-(define (string-insert-v1 str i) (if (<= (string-length str) 0)  "enter string" (string-insert str i)))
-(define (string-insert s i)(string-append (substring s 0 i)"_"(substring s i)))
-
 (define-struct editor [pre post])
 ; An Editor is a structure:
 ;   (make-editor String Number)
@@ -130,10 +108,14 @@
 (define (edit ed ke)
   (cond
     [(key=? ke "\b" ) (delete-last ed)]
-    [(valid-key? "left") (left-cursor ed)]
-    [(valid-key? "right") (right-cursor ed)]
-    [else (string-append (editor-pre ed) ke)]))
-    ;[(valid-key? ke) (string-append (editor-pre ed) ke)]))
+    [(valid-key? ke)
+     (cond
+       [(key=? ke "left") (left-cursor ed)]
+       [(key=? ke "right")(right-cursor ed)]
+       [(valid-key? ke) (make-editor (string-append (editor-pre ed) ke) (+ (editor-post ed) 1))])]
+    [(key=? ke "\t") (make-editor (editor-pre ed) (editor-post ed))]
+    [(key=? ke "\r") (make-editor (editor-pre ed) (editor-post ed))]
+    [else (make-editor (string-append (editor-pre ed) ke) (+ (editor-post ed) 1))]))
 
 ; left-cursor : editor -> Editor
 ; This should take in an editor structure and subtract 1 from the
@@ -163,9 +145,6 @@
   (cond
     [(string=? (editor-pre ed) "") (make-editor "" 0)] 
     [else (left-cursor (make-editor (string-append (substring  (editor-pre ed) 0 (- (editor-post ed) 1)) (substring (editor-pre ed) (editor-post ed) (string-length  (editor-pre ed)))) (editor-post ed)))]))
-#|
-    [(string=? (editor-pre ed) "") (make-editor "" (editor-post ed))] ;try 0 if this doesn't work (editor-post ed) -> 0
-    [else (make-editor (string-append (substring  (editor-pre ed) 0 (- (editor-post ed) 1)) (substring (editor-pre ed) (editor-post ed) (string-length  (editor-pre ed)))) (editor-post ed))]))|#
 
 ; right-cursor : editor -> Editor
 ; This should take in an editor structure and add 1 to the
@@ -185,103 +164,3 @@
      (make-editor (editor-pre ed) (editor-post ed))]
     [(< (editor-post ed) (string-length (editor-pre ed)))
      (make-editor (editor-pre ed) (+ (editor-post ed) 1))]))
-
-
-; left cursor expression
-;(- (image-width (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
-;                    (image-width (editor-pre(make-editor(text  (string-last (string-append(editor-pre s)(editor-post s))) 11 "black")(editor-post s)))))
-; left cursor expression
-;(- (image-width (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
-; (- (image-width (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
-;   (image-width (editor-pre(make-editor(text  (string-last (string-append(editor-pre s)(editor-post s))) 11 "black")(editor-post s))))))  
-
-#|(define (cursor-posn s)
-   (image-width (place-image
-                cursor
-                 ;(cursor-helper s)
-                (distance-from-cursor s ke)
-                6 
-                ;[(string=? s "right") (right-cursor s)])
-
-                ;(editor-pre (make-editor
-                             (text s 11 "black"))))|#
- 
-(define (left-cursor-posn s)
-  (editor-post (make-editor s
-                            (image-width(place-image
-                                         cursor
-                                         #|(- (image-width (editor-pre(make-editor(text  s 11 "black") (editor-post s)))) 
-                               (- (image-width (editor-pre(make-editor(text  s 11 "black")(editor-post s))))
-                                  (image-width (editor-pre (make-editor(text (string-last  s) 11 "black")(editor-post s))))))
-                            (image-height (editor-pre(make-editor(text  s 11 "black")(editor-post s))))|#
-                                         (- (image-width (editor-pre(make-editor(text (editor-pre s) 11 "black") (editor-post s)))) 
-                                            (- (image-width (editor-pre(make-editor(text (editor-pre s) 11 "black")(editor-post s))))
-                                               (image-width (editor-pre (make-editor(text (string-last (editor-pre s)) 11 "black")(editor-post s))))))
-                                         (image-height (editor-pre(make-editor(text (editor-pre s) 11 "black")(editor-post s))))
-                                         ;[(string=? s "right") (right-cursor s)])
-
-                                         (editor-pre (make-editor (text (editor-pre s) 11 "black")(editor-post s))))))))
-
-
-(define (count-strings L)
-  ; L a los
-  (cond [(empty? L) (quote())]
-        [(cons? L)
-         (+ 1 (count-strings (rest L)))]))
-
-#|(define length
-  (lambda (lat)
-    (cond
-      [(null? lat) 0]
-      [else (add1 (length (cdr lat)))])))|#
-
-;(define (distance-from-cursor s)
-;  (* (count-strings () 6))
-
-
-
-
-#|(define (string-count s ke)
-  (cond
-    [(valid-key? s ke) (+ n 1)]
-    [(not (valid-key? s)) (- n 1)]))|#
-                   
-
-
-#|(define (left-cursor-posn s)
-  (- (image-width (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
-  (- (image-width (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
-     (image-width (editor-pre(make-editor(text  (string-last (string-append(editor-pre s)(editor-post s))) 11 "black")(editor-post s)))))))|#
-#|  (cond
-    [(string=? (editor-pre s) "") 0];(image-width (editor-pre(make-editor(text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))]
-    [else (- (image-width (editor-pre (make-editor (text  (string-append(editor-pre s)(editor-post s)) 11 "black")(editor-post s))))
-                    (image-width (editor-pre (make-editor(text  (string-last (string-append(editor-pre s)(editor-post s))) 11 "black")(editor-post s)))))]))|#
-
-  
- 
-#|(define (edit s ke)
-  (cond
-    [(key=? "\b" ke) (delete-last (editor-pre s))]
-    [else  (make-editor(string-append (editor-pre s)(editor-post s)) ke)]))|#
-
-
-;(define test (make-editor "test" (make-posn (text-image-width (text "test" 11 "red"))
-;                                           (text-image-height (text "test" 11 "red")))))
-
-#|  (define (render s)
-  (overlay/align "left" "center"
-                 
-                 (place-image/align
-                  (text (string-append(editor-pre s)  (editor-post s))  11 "black")
-                  100 10 "left" "bottom"
-                   
-                 (empty-scene 200 20)))|#
-
-#|(define (delete-last ed)
-  (cond
-    [(string=? (editor-pre ed) "") ""]
-    [else (string-append
-           (substring
-            (editor-post ed) 0 (- (string-length (editor-post ed)) 1))
-           (editor-post ed))]))|#
-
