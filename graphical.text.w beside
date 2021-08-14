@@ -2,6 +2,9 @@
 (require 2htdp/universe)
 (require picturing-programs)
 
+(define (string-insert str i) (string-append (substring str 0 i) " " (substring str i (string-length str))))
+(define scene-width 100)
+
 ; A 1String is a String of length 1, 
 ; including
 ; – "\\" (the backslash),
@@ -32,8 +35,7 @@
 (define (run s)
   (big-bang  s
     (to-draw render)
-    (on-key edit)
-    ))
+    (on-key edit)))
 
 ; render : string -> Image
 ; render takes in a string and outputs an image
@@ -45,7 +47,7 @@
                                (text (substring "hello" 0 4) 11 "black")
                                cursor)
                               (text (substring "hello" 4 (string-length "hello")) 11 "black"))
-                             (empty-scene 100 20)))
+                             (empty-scene scene-width 20)))
 
 (check-expect (render (make-editor "hell o" 5))
               (overlay/align "left" "center"
@@ -54,24 +56,23 @@
                                (text (substring "hell o" 0 5) 11 "black")
                                cursor)
                               (text (substring "hell o" 5 (string-length "hell o")) 11 "black"))
-                             (empty-scene 100 20)))
+                             (empty-scene scene-width 20)))
 
- (image-width(overlay/align "left" "center"
+(image-width(overlay/align "left" "center"
+                           (beside
+                            (beside
+                             (text (substring "hell o" 0 5) 11 "black")
+                             cursor)
+                            (text (substring "hell o" 5 (string-length "hell o")) 11 "black"))
+                           (empty-scene scene-width 20)))
+
+(image-width (overlay/align "left" "center"
+                            (beside
                              (beside
-                              (beside
-                               (text (substring "hell o" 0 5) 11 "black")
-                               cursor)
-                              (text (substring "hell o" 5 (string-length "hell o")) 11 "black"))
-                             (empty-scene 100 20)))
-
-
-             (image-width (overlay/align "left" "center"
-                             (beside
-                              (beside
-                               (text (substring  "hello how it going with" 23) 11 "black")
-                               cursor)
-                              (text (substring "hello how it going with" 23 (string-length "hello how it going with")) 11 "black"))
-                             (empty-scene 90 20)))
+                              (text (substring  "hello how it going with" 23) 11 "black")
+                              cursor)
+                             (text (substring "hello how it going with" 23 (string-length "hello how it going with")) 11 "black")) 
+                            (empty-scene scene-width 20)))
  
 (define (render s)
   (overlay/align "left" "center"
@@ -80,15 +81,16 @@
                    (text (substring (editor-pre s) 0 (editor-post s)) 11 "black")
                    cursor)
                   (text (substring (editor-pre s) (editor-post s) (string-length (editor-pre s))) 11 "black"))
-                 (empty-scene 100 20)))
+                 (empty-scene scene-width 20)))
+
 (define (render-width s)
   (image-width(overlay/align "left" "center"
-                 (beside
-                  (beside
-                   (text (substring (editor-pre s) 0 (editor-post s)) 11 "black")
-                   cursor)
-                  (text (substring (editor-pre s) (editor-post s) (string-length (editor-pre s))) 11 "black"))
-                 (empty-scene 100 20))))
+                             (beside
+                              (beside
+                               (text (substring (editor-pre s) 0 (editor-post s)) 11 "black")
+                               cursor)
+                              (text (substring (editor-pre s) (editor-post s) (string-length (editor-pre s))) 11 "black"))
+                             (empty-scene scene-width 20))))
 
 ; valid-key? : key-event -> boolean
 ; valid-key? takes in a key-event and
@@ -120,11 +122,16 @@
           (key=? ke "\r")) false]
     [else (1string? ke)]))
 
-#|(define (END-POINT ed) (+ (image-width (text (editor-pre ed) 11 "black")) 200))
-
-(define (out-of-bounds? ed)
-  (or (>=  (image-width ed) (END-POINT ed))
-      (>=  (image-width ed) (END-POINT ed))))|#
+; edge-of-screen : editor -> Boolean
+; Takes in an editor and produces true if
+; the editor-pre's image width is less than the scene width
+; and false otherwise
+(check-expect (edge-of-screen? (make-editor "hello" 5)) false)
+(check-expect (edge-of-screen? (make-editor "hello hows it going with" 24)) true)
+(check-expect (edge-of-screen? (make-editor "hello hows it going " 20)) false)
+(check-expect (edge-of-screen? (make-editor "hello hows it going w" 21)) true)
+(define (edge-of-screen? ed)
+  (>= (image-width (text (editor-pre ed) 11 "black")) scene-width))
 
 ; edit : editor key-event -> Editor
 ; edit takes in an editor structure (make-editor pre post)
@@ -164,13 +171,12 @@
        [(key=? ke "left") (left-cursor ed)]
        [(key=? ke "right")(right-cursor ed)]
        [(key=? ke " ") (make-editor (string-insert (editor-pre ed) (editor-post ed)) (+ (editor-post ed) 1))]
-       [(valid-key? ke)(make-editor (string-append (editor-pre ed) ke) (+ (editor-post ed) 1))])]
+       [(and(valid-key? ke)
+            (not(edge-of-screen? ed)))
+        (make-editor (string-append (editor-pre ed) ke) (+ (editor-post ed) 1))]
+       [else ed])]
     [(key=? ke "\t") (make-editor (editor-pre ed) (editor-post ed))]
-    [(key=? ke "\r") (make-editor (editor-pre ed) (editor-post ed))])) 
- 
-;(define (not-off-screen? ed)
-;(< (
-(define (string-insert str i) (string-append (substring str 0 i) " " (substring str i (string-length str)))) 
+    [(key=? ke "\r") (make-editor (editor-pre ed) (editor-post ed))]))
 
 ; left-cursor : editor -> Editor
 ; This should take in an editor structure and subtract 1 from the
@@ -199,7 +205,7 @@
 (define (delete-last ed)
   (cond
     [(string=? (editor-pre ed) "") (make-editor "" 0)]
-    [(= (editor-post ed) 0) (make-editor (editor-pre ed) (editor-post ed))]
+    [(= (editor-post ed) 0) ed]
     [else (left-cursor (make-editor (string-append (substring  (editor-pre ed) 0 (- (editor-post ed) 1)) (substring (editor-pre ed) (editor-post ed) (string-length  (editor-pre ed)))) (editor-post ed)))]))
 
 ; right-cursor : editor -> Editor
