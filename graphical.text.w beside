@@ -16,7 +16,6 @@
          (string=? s "\t")) false]
     [else (= (string-length s) 1)]))
        
-
 (define-struct editor [pre post])
 ; An Editor is a structure:
 ;   (make-editor String Number)
@@ -33,17 +32,8 @@
 (define (run s)
   (big-bang  s
     (to-draw render)
-    (on-key edit)))
-
-; distance-from-cursor : number -> Number
-; distance-from-cursor takes in a number and multipies it by 6
-(check-expect (distance-from-cursor 6) 36)
-(check-expect (distance-from-cursor 7) 42)
-(check-expect (distance-from-cursor 0) 0)
-(check-expect (distance-from-cursor 1) 6)
-(check-expect (distance-from-cursor -1) -6)
-(define (distance-from-cursor n)
-  (* n 6)) 
+    (on-key edit)
+    ))
 
 ; render : string -> Image
 ; render takes in a string and outputs an image
@@ -55,7 +45,7 @@
                                (text (substring "hello" 0 4) 11 "black")
                                cursor)
                               (text (substring "hello" 4 (string-length "hello")) 11 "black"))
-                             (empty-scene 200 20)))
+                             (empty-scene 100 20)))
 
 (check-expect (render (make-editor "hell o" 5))
               (overlay/align "left" "center"
@@ -64,8 +54,25 @@
                                (text (substring "hell o" 0 5) 11 "black")
                                cursor)
                               (text (substring "hell o" 5 (string-length "hell o")) 11 "black"))
-                             (empty-scene 200 20)))
+                             (empty-scene 100 20)))
 
+ (image-width(overlay/align "left" "center"
+                             (beside
+                              (beside
+                               (text (substring "hell o" 0 5) 11 "black")
+                               cursor)
+                              (text (substring "hell o" 5 (string-length "hell o")) 11 "black"))
+                             (empty-scene 100 20)))
+
+
+             (image-width (overlay/align "left" "center"
+                             (beside
+                              (beside
+                               (text (substring  "hello how it going with" 23) 11 "black")
+                               cursor)
+                              (text (substring "hello how it going with" 23 (string-length "hello how it going with")) 11 "black"))
+                             (empty-scene 90 20)))
+ 
 (define (render s)
   (overlay/align "left" "center"
                  (beside
@@ -73,7 +80,15 @@
                    (text (substring (editor-pre s) 0 (editor-post s)) 11 "black")
                    cursor)
                   (text (substring (editor-pre s) (editor-post s) (string-length (editor-pre s))) 11 "black"))
-                 (empty-scene 200 20)))
+                 (empty-scene 100 20)))
+(define (render-width s)
+  (image-width(overlay/align "left" "center"
+                 (beside
+                  (beside
+                   (text (substring (editor-pre s) 0 (editor-post s)) 11 "black")
+                   cursor)
+                  (text (substring (editor-pre s) (editor-post s) (string-length (editor-pre s))) 11 "black"))
+                 (empty-scene 100 20))))
 
 ; valid-key? : key-event -> boolean
 ; valid-key? takes in a key-event and
@@ -104,7 +119,13 @@
     [(and (1string? ke)
           (key=? ke "\r")) false]
     [else (1string? ke)]))
- 
+
+#|(define (END-POINT ed) (+ (image-width (text (editor-pre ed) 11 "black")) 200))
+
+(define (out-of-bounds? ed)
+  (or (>=  (image-width ed) (END-POINT ed))
+      (>=  (image-width ed) (END-POINT ed))))|#
+
 ; edit : editor key-event -> Editor
 ; edit takes in an editor structure (make-editor pre post)
 ; (editor-pre String) and (editor-post Number)
@@ -139,14 +160,16 @@
   (cond
     [(key=? ke "\b" ) (delete-last ed)]
     [(valid-key? ke)
-     (cond
+     (cond 
        [(key=? ke "left") (left-cursor ed)]
        [(key=? ke "right")(right-cursor ed)]
        [(key=? ke " ") (make-editor (string-insert (editor-pre ed) (editor-post ed)) (+ (editor-post ed) 1))]
-       [(valid-key? ke) (make-editor (string-append (editor-pre ed) ke) (+ (editor-post ed) 1))])]
+       [(valid-key? ke)(make-editor (string-append (editor-pre ed) ke) (+ (editor-post ed) 1))])]
     [(key=? ke "\t") (make-editor (editor-pre ed) (editor-post ed))]
-    [(key=? ke "\r") (make-editor (editor-pre ed) (editor-post ed))]))
-
+    [(key=? ke "\r") (make-editor (editor-pre ed) (editor-post ed))])) 
+ 
+;(define (not-off-screen? ed)
+;(< (
 (define (string-insert str i) (string-append (substring str 0 i) " " (substring str i (string-length str)))) 
 
 ; left-cursor : editor -> Editor
